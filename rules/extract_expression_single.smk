@@ -2,8 +2,9 @@
 
 #Which rules will be run on the host computer and not sent to nodes
 localrules:
-	plot_rna_metrics,
-	convert_long_to_mtx
+    plot_rna_metrics,
+    convert_long_to_mtx,
+    doublet_detection
 
 rule extract_umi_expression:
     input:
@@ -113,3 +114,18 @@ rule convert_long_to_mtx:
         samples=lambda wildcards: wildcards.sample
     script:
         "../scripts/convert_mtx.py"
+
+rule doublet_detection:
+    input:
+        input_dir = '{results_dir}/samples/{sample}/umi/'
+    output:
+        scores = '{results_dir}/samples/{sample}/doublet_scores.csv'
+    params:
+        min_counts=config['DOUBLET_DETECTION']['min_counts'],
+        min_cells=config['DOUBLET_DETECTION']['min_cells'],
+        min_gene_variability_pctl=config['DOUBLET_DETECTION']['min_gene_variability_pctl'],
+        n_prin_comps=config['DOUBLET_DETECTION']['n_prin_comps']
+    conda:
+        '../envs/doublet_detection.yaml'
+    script:
+        '../scripts/detect_doublets.py'

@@ -163,6 +163,7 @@ elif len(config['META']['species'].keys()) == 1:
                 '{results_dir}/plots/rna_metrics/{sample}_rna_metrics.pdf',
                 '{results_dir}/summary/{type}/expression.mtx',
                 '{results_dir}/samples/{sample}/{type}/expression.mtx',
+                '{results_dir}/summary/merged_doublet_scores.csv',
                 #merge
                 '{results_dir}/plots/UMI_vs_counts.pdf',
                 '{results_dir}/plots/UMI_vs_gene.pdf',
@@ -225,7 +226,8 @@ rule extract:
         expand(
             ['{results_dir}/plots/rna_metrics/{sample}_rna_metrics.pdf',
             '{results_dir}/summary/{type}/expression.mtx',
-            '{results_dir}/samples/{sample}/{type}/expression.mtx'],
+            '{results_dir}/samples/{sample}/{type}/expression.mtx',
+            '{results_dir}/summary/merged_doublet_scores.csv'],
                 results_dir=results_dir,
                 sample=samples.index,
                 type=types)

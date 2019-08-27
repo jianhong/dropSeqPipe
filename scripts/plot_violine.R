@@ -63,6 +63,8 @@ count_matrix <- ReadMTX(snakemake@input$counts)
 # importing UMIs ( summary/umi_expression_matrix.tsv )
 umi_matrix <- ReadMTX(snakemake@input$UMIs)
 
+doublet_scores = read.csv(snakemake@input$doublet_scores)
+
 design <- read.csv(snakemake@input$design,
   stringsAsFactors = TRUE,
   header = TRUE,
@@ -73,6 +75,10 @@ metaData <- data.frame(cellNames = colnames(umi_matrix)) %>%
   mutate(barcode = factor(str_replace(cellNames, ".+_", ""))) %>%
   left_join(design, by = "samples")
 rownames(metaData) <- metaData$cellNames
+
+rownames(doublet_scores) = doublet_scores$cell
+
+metaData$doublet_scores = doublet_scores[rownames(metaData),'score']
 
 # possible to set is.expr = -1 to avoid filtering whilst creating
 # seuratobj <- CreateSeuratObject(raw.data = umi_matrix, meta.data = metaData, is.expr = -1)
@@ -162,7 +168,7 @@ seuratobj <- AddMetaData(seuratobj, tmp, "umi.per.gene")
 
 
 gg <- VlnPlot(seuratobj,
-  c("nUMI", "nGene", "top50", "umi.per.gene", "pct.Ribo", "pct.mito"),
+  c("nUMI", "nGene", "top50", "umi.per.gene", "pct.Ribo", "pct.mito", 'doublet_scores'),
   x.lab.rot = TRUE, do.return = TRUE
 )
 # ggsave(gg,file=file.path("violinplots_comparison_UMI.pdf"),width=18,height=18)

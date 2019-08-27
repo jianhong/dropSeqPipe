@@ -1,12 +1,25 @@
 
 localrules:
+    merge_doublet_scores,
     merge_long,
     violine_plots,
     summary_stats
 
+
+rule merge_doublet_scores:
+    input:
+        doublet_scores=expand('{results_dir}/samples/{sample}/doublet_scores.csv', sample=samples.index, results_dir=results_dir)
+    output:
+        merged_doublet_scores='{results_dir}/summary/merged_doublet_scores.csv'
+    params:
+        samples=lambda wildcards: samples.index
+    conda: '../envs/r.yaml'
+    script:
+        '../scripts/merge_doublet_scores.R'
+
 rule merge_long:
     input:
-        expand('{results_dir}/samples/{sample}/{{type}}/expression.long', sample=samples.index, results_dir=results_dir)
+        expand('{results_dir}/samples/{sample}/{{type}}/expression.long', sample=samples.index, results_dir=results_dir),
     output:
         mtx='{results_dir}/summary/{type}/expression.mtx',
         barcodes='{results_dir}/summary/{type}/barcodes.tsv',
@@ -21,7 +34,8 @@ rule violine_plots:
     input:
         UMIs='{results_dir}/summary/umi/expression.mtx',
         counts='{results_dir}/summary/read/expression.mtx',
-        design='samples.csv'
+        design='samples.csv',
+        doublet_scores='{results_dir}/summary/merged_doublet_scores.csv'
     conda: '../envs/r.yaml'
     output:
         pdf_violine='{results_dir}/plots/violinplots_comparison_UMI.pdf',

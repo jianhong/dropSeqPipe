@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - samples.csv and config.yaml schema validation. This will help users fix missing values.
 - DetectBeadSubstitutionErrors was added in the mapping steps.
+- Doublet detection is now in the metadata provided by [scrublet](https://github.com/allonkleinlab/scrublet). Configuration for this step have been added to the config.yaml
 
 ### Changed
 - Minimum read length after trimming is now the index of the end of the UMI

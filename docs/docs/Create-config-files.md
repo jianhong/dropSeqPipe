@@ -63,6 +63,12 @@ EXTRACTION:
     strand-strategy: SENSE
     UMI-edit-distance: 1
     minimum-counts-per-UMI: 0
+DOUBLET_DETECTION:
+    min_counts: 2
+    min_cells: 3
+    min_gene_variability_pctl: 85
+    n_prin_comps: 30
+DEBUG: False
 ```
 Please note the "space" after the colon, is needed for the yaml to work.
 
@@ -131,6 +137,18 @@ All of the values for STAR are the default ones. For details about STAR paramete
 * `UMI-edit-distance` This is the maximum manhattan distance between two UMI barcode when extracting count matrices.
 * `min-count-per-umi` is the minimum UMI/Gene pair needed to be counted as one.
 * `strand-strategy` `SENSE` defines that you only count genes where the forward strand mapped to the forward region on the DNA. Other possibilities are `ANTISENSE` (only count reads that mapped on the opposite strand) or `BOTH` (count all).
+
+### [DOUBLET_DETECTION]
+
+* `min_counts` is the minimum counts per cell to take them into account
+* `min_cells` is the minimum number of cells to consider
+* `min_gene_variability_pctl` is the minimum gene variability to take into account
+* `n_prin_comps` is the number of principal component to take into account for the detection.
+
+### [DEBUG]
+
+Can be `True` or `False`. This flag will produce a folder with R objects in it. Most of the R scripts will output an R object of the snakemake object and one with the complete workspace once the script has run. THis is to help debugging the scripts when developing new features.
+
 
 # 2. samples.csv - Samples parameters
 This file holds the sample names, expected cell numbers and read length for each sample.
