@@ -119,7 +119,7 @@ rule doublet_detection:
     input:
         input_dir = '{results_dir}/samples/{sample}/umi/'
     output:
-        scores = '{results_dir}/samples/{sample}/doublet_scores.csv'
+        scores = temp('{results_dir}/samples/{sample}/doublet_scores.csv')
     params:
         min_counts=config['DOUBLET_DETECTION']['min_counts'],
         min_cells=config['DOUBLET_DETECTION']['min_cells'],
