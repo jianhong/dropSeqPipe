@@ -1,0 +1,16 @@
+cite_string: 'CITE'
+cite_barcodes:
+    barcode-whitelist: ''
+    cell-barcode:
+        start:
+        end:
+    collapsing_distance: 1
+    UMI-barcode:
+        start:
+        end:
+    collapsing_distance: 1
+cite_tags:
+    tags_file: ''
+    hamming_distance_error: 1
+cite_outfolder: 'cite_results'
+cite_extra_params: ''

@@ -18,6 +18,14 @@ except:
     configfile_path = "config.yaml"
 configfile: configfile_path
 
+if config['META']['cite_config'] != '':
+    print('Running with cite_seq_data')
+    configfile: config['META']["cite_config"]
+    data_types = ['RNA',config['cite_string']]
+    CITE = True
+else:
+    data_types = ['RNA']
+    CITE = False
 
 #Include the gtf biotypes yaml
 configfile: config['META']['gtf_biotypes']
@@ -85,20 +93,22 @@ wildcard_constraints:
 
 # Flexible ways to get the R1 and R2 files
 def get_R1_files(wildcards):
-    samples = [f for f in glob.glob("{}/*.fastq.gz".format(raw_data_dir)) if (re.search('R1', re.sub(wildcards.sample,'',f)) and re.search(wildcards.sample,f))]
+    samples = [f for f in glob.glob("{}/*.fastq.gz".format(raw_data_dir)) if (re.search('R1', re.sub(wildcards.sample,'',f)) and re.search(wildcards.data_type,f) and re.search(wildcards.sample,f))]
     if len(samples)>1 & isinstance(samples,list):
         exit('Multiple read files for one sample. Please check file names or run snakemake -s rules/prepare.smk for multilane samples first.')
     if samples == []:
         exit('\tNo sample files found in the {}/ directory.\n\t\tPlease check that the path for the raw data is set properly in config.yaml'.format(raw_data_dir))
     return(samples)
 
+
 def get_R2_files(wildcards):
-    samples = [f for f in glob.glob("{}/*.fastq.gz".format(raw_data_dir)) if (re.search('R2', re.sub(wildcards.sample,'',f)) and re.search(wildcards.sample,f))]
+    samples = [f for f in glob.glob("{}/*.fastq.gz".format(raw_data_dir)) if (re.search('R2', re.sub(wildcards.sample,'',f)) and re.search(wildcards.data_type,f) and re.search(wildcards.sample,f))]
     if len(samples)>1 & isinstance(samples,list):
         exit('Multiple read files for one sample. Please check file names or run snakemake -s rules/prepare.smk for multilane samples first.')
     if samples == []:
         exit('\tNo sample files found in the {} directory.\n\t\tPlease check that the path for the raw data is set properly in config.yaml'.format(raw_data_dir))
     return(samples)
+
 
 
 if len(config['META']['species'].keys()) == 2:
@@ -201,13 +211,14 @@ rule qc:
 rule filter:
     input:
         expand(
-            ['{results_dir}/plots/adapter_content.pdf',
+            ['{results_dir}/plots/adapter_content_{data_type}.pdf',
             '{results_dir}/reports/barcode_filtering.html',
             '{results_dir}/reports/RNA_filtering.html',
-            '{results_dir}/samples/{sample}/trimmmed_repaired_R1.fastq.gz',
+            '{results_dir}/samples/{sample}/{data_type}_trimmmed_repaired_R1.fastq.gz',
             '{results_dir}/samples/{sample}/top_barcodes.csv'],
                 results_dir=results_dir,
-                sample=samples.index)
+                sample=samples.index,
+                data_type=data_types)
 
 rule map:
     input:
