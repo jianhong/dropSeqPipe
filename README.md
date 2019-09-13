@@ -18,7 +18,7 @@ conda install -n dropSeqPipe -c bioconda -c conda-forge snakemake
 ## How to run
 
 The files in your WORKING_DIR
-
+```
 /path/to/your/WORKING_DIR/
 | -- RAW_DATA/
 | -- -- sample_name1_R1.fastq.gz
@@ -28,7 +28,7 @@ The files in your WORKING_DIR
 | samples.csv
 | gRNA.fa
 | gRNA.gtf
-
+```
 - fastq files must be put in RAW_DATA folder.
 - gRNA.gtf and gRNA.fa must be available.
 -	samples.csv must be available.
