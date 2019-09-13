@@ -41,7 +41,9 @@ sample_name2,500,100,Batch2
 ```
 
 expected_cells is the amount of cells you expect from your sample.
+
 read_length is the read length of the mRNA (Read2). This is necessary for STAR index generation
+
 batch is the batch of your sample. If you are added new samples to the same experiment, this is typically a good place to add the main batch.
 
 run cropseq.sh
