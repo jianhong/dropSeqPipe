@@ -61,13 +61,13 @@ rownames(metaData) <- metaData$cellNames
 
 # possible to set is.expr = -1 to avoid filtering whilst creating
 # seuratobj <- CreateSeuratObject(raw.data = umi_matrix, meta.data = metaData, is.expr = -1)
-seuratobj <- CreateSeuratObject(raw.data = umi_matrix, meta.data = metaData)
-seuratobj <- SetAllIdent(object = seuratobj, id = "samples")
+seuratobj <- CreateSeuratObject(counts = umi_matrix, meta.data = metaData)
+Idents(seuratobj) <- "samples"
 # relabel cell idenity (https://github.com/satijalab/seurat/issues/380)
 seuratobj@meta.data$orig.ident <- seuratobj@meta.data$samples
 
-mycount <- CreateSeuratObject(raw.data = count_matrix, meta.data = metaData)
-mycount <- SetAllIdent(object = mycount, id = "samples")
+mycount <- CreateSeuratObject(counts = count_matrix, meta.data = metaData)
+Idents(mycount) <- "samples"
 mycount@meta.data$orig.ident <- mycount@meta.data$samples
 # turn off filtering
 # note, the @meta.data slot contains usefull summary stuff
@@ -80,7 +80,7 @@ mycount@meta.data$orig.ident <- mycount@meta.data$samples
 # dropseqLib1_GAGTCTGAGGCG dropseqLib1 dropseqLib1
 meta.data         <- seuratobj@meta.data
 # combining UMIs and Counts in to one Seurat object
-meta.data$nCounts <- mycount@meta.data$nUMI
+meta.data$nCounts <- mycount@meta.data$nCount_RNA
 seuratobj@meta.data         <- meta.data
 # delete since Counts have been added to seuratobj as nCounts column
 rm(mycount)
@@ -103,7 +103,7 @@ gglayers <- list(
                      breaks = scales::pretty_breaks(n = 8))
 )
 
-gg <- ggplot(meta.data, aes(x = nUMI, y=nCounts, color=orig.ident)) +
+gg <- ggplot(meta.data, aes(x = nCount_RNA, y=nCounts, color=orig.ident)) +
   #   coord_trans(y="log10",x = "log10") +
   gglayers +
   geom_abline(intercept = 0, slope = 1) +
@@ -118,39 +118,41 @@ gg <- ggplot(meta.data, aes(x = nUMI, y=nCounts, color=orig.ident)) +
 
 # how about unaligned reads/UMI?
 # Note(Seb): raw.data is actually filtered data i.e. nr of genes likely to be smaller than input data!
-mito.gene.names  <- grep("^mt-", rownames(seuratobj@raw.data), value=TRUE, ignore.case=TRUE)
-sribo.gene.names <- grep("^Rps", rownames(seuratobj@raw.data), value=TRUE, ignore.case=TRUE)
-lribo.gene.names <- grep("^Rpl", rownames(seuratobj@raw.data), value=TRUE, ignore.case=TRUE)
 
-col.total            <- Matrix::colSums(seuratobj@raw.data)
+mito.gene.names  <- grep("^mt-", rownames(seuratobj), value=TRUE, ignore.case=TRUE)
+sribo.gene.names <- grep("^Rps", rownames(seuratobj), value=TRUE, ignore.case=TRUE)
+lribo.gene.names <- grep("^Rpl", rownames(seuratobj), value=TRUE, ignore.case=TRUE)
+
+raw.data <- GetAssayData(seuratobj, "counts")
+col.total            <- Matrix::colSums(raw.data)
 meta.data$col.total   <- col.total
 
-seuratobj.top_50   <- apply(seuratobj@raw.data, 2, function(x) sum(x[order(x, decreasing = TRUE)][1:50])/sum(x))
+seuratobj.top_50   <- apply(raw.data, 2, function(x) sum(x[order(x, decreasing = TRUE)][1:50])/sum(x))
 # mycount.top_50 <- apply(mycount@raw.data, 2, function(x) sum(x[order(x, decreasing = TRUE)][1:50])/sum(x))
 
-seuratobj <- AddMetaData(seuratobj, Matrix::colSums(seuratobj@raw.data[sribo.gene.names, ])/col.total, "pct.sribo")
-seuratobj <- AddMetaData(seuratobj, Matrix::colSums(seuratobj@raw.data[lribo.gene.names, ])/col.total, "pct.lribo")
-seuratobj <- AddMetaData(seuratobj, Matrix::colSums(seuratobj@raw.data[unique(c(sribo.gene.names, lribo.gene.names)), ])/col.total, "pct.Ribo")
-seuratobj <- AddMetaData(seuratobj, Matrix::colSums(seuratobj@raw.data[mito.gene.names, ])/col.total, "pct.mito")
+seuratobj <- AddMetaData(seuratobj, Matrix::colSums(raw.data[sribo.gene.names, ])/col.total, "pct.sribo")
+seuratobj <- AddMetaData(seuratobj, Matrix::colSums(raw.data[lribo.gene.names, ])/col.total, "pct.lribo")
+seuratobj <- AddMetaData(seuratobj, Matrix::colSums(raw.data[unique(c(sribo.gene.names, lribo.gene.names)), ])/col.total, "pct.Ribo")
+seuratobj <- AddMetaData(seuratobj, Matrix::colSums(raw.data[mito.gene.names, ])/col.total, "pct.mito")
 seuratobj <- AddMetaData(seuratobj, seuratobj.top_50, "top50")
-tmp <- seuratobj@meta.data$nUMI/seuratobj@meta.data$nGene
+tmp <- seuratobj@meta.data$nCount_RNA/seuratobj@meta.data$nFeature_RNA
 names(tmp) <- rownames(seuratobj@meta.data)
 seuratobj <- AddMetaData(seuratobj, tmp, "umi.per.gene")
 
 
 gg <- VlnPlot(seuratobj,
-              c("nUMI", "nGene", "top50", "umi.per.gene", "pct.Ribo", "pct.mito"),
+              c("nCount_RNA", "nFeature_RNA", "top50", "umi.per.gene", "pct.Ribo", "pct.mito"),
               x.lab.rot = TRUE, do.return = TRUE)
 # ggsave(gg,file=file.path("violinplots_comparison_UMI.pdf"),width=18,height=18)
 ggsave(gg, file  = snakemake@output$pdf_violine, width = 18, height = 18)
-# gg <- VlnPlot(mycount,c("nUMI", "nGene", "top50", "count.per.gene","pct.Ribo", "pct.mito"), x.lab.rot = TRUE, do.return = TRUE)
+# gg <- VlnPlot(mycount,c("nCount_RNA", "nFeature_RNA", "top50", "count.per.gene","pct.Ribo", "pct.mito"), x.lab.rot = TRUE, do.return = TRUE)
 # ggsave(gg,file=file.path("violinplots_comparison_count.pdf"),width=18,height=18)
 
-# gg <- GenePlot(object = seuratobj, gene1 = "nUMI", gene2 = "nGene")
+# gg <- GenePlot(object = seuratobj, gene1 = "nCount_RNA", gene2 = "nFeature_RNA")
 # ggsave(gg,file=file.path("violinplots_comparison.pdf"),width=18,height=18)
 
 
-gg <- ggplot(meta.data, aes(x = nUMI, y = nGene, color=orig.ident)) +
+gg <- ggplot(meta.data, aes(x = nCount_RNA, y = nFeature_RNA, color=orig.ident)) +
   gglayers +
   labs(title = "Genes (pooled mouse and human set) vs UMIs for each bead",
        x = "Number of UMIs per Bead [k]",
@@ -165,7 +167,7 @@ ggsave(gg, file = snakemake@output$pdf_umi_vs_gene, width = 12, height = 7)
 
 ################################################################################
 ## same for Counts instead UMIs (using mycount object)
-gg <- ggplot(meta.data, aes(x = nCounts, y = nGene, color=orig.ident)) +
+gg <- ggplot(meta.data, aes(x = nCounts, y = nFeature_RNA, color=orig.ident)) +
   gglayers +
   labs(title = "Genes (pooled mouse and human set) vs Counts for each bead",
        x = "Number of Counts per Bead [k]",
@@ -179,7 +181,7 @@ ggsave(gg, file = snakemake@output$pdf_count_vs_gene, width = 12, height = 7)
 
 
 # head(meta.data,2)
-#                              nGene nUMI                    cellNames         samples      barcode expected_cells read_length  batch      orig.ident pct.sribo  pct.lribo  pct.Ribo  pct.mito     top50 umi.per.gene
+#                              nGene nCount_RNA                    cellNames         samples      barcode expected_cells read_length  batch      orig.ident pct.sribo  pct.lribo  pct.Ribo  pct.mito     top50 umi.per.gene
 # sample1_GAGTCTGAGGCG     6    6 sample1_GAGTCTGAGGCG sample1 GAGTCTGAGGCG            100         100 batch1 sample1 0.0000000 0.00000000 0.0000000 0.0000000 1.0000000     1.000000
 # sample1_CAGCCCTCAGTA   264  437 sample1_CAGCCCTCAGTA sample1 CAGCCCTCAGTA            100         100 batch1 sample1 0.0389016 0.07551487 0.1144165 0.0228833 0.5102975     1.655303
 
