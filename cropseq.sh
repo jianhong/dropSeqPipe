@@ -173,7 +173,7 @@ do
    newheader=${line#">"}
    newheader=${newheader//[[:blank:]]/}
    if [ "$header" != "" ]; then
-     echo ">$header" >> gRNA.fa
+     echo ">chr_$header" >> gRNA.fa
      echo "$upsgRNA$seq$dwsgRNA" >> gRNA.fa
      end=$(( 247 + ${#seq}))
      echo -e "chr_${header}\tspikein\tgene\t246\t${end}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"" >> gRNA.gtf
@@ -185,7 +185,7 @@ do
  fi
 done < "gRNAseq.fa"
 header=$newheader
-echo ">$header" >> gRNA.fa
+echo ">chr_$header" >> gRNA.fa
 echo "$upsgRNA$seq$dwsgRNA" >> gRNA.fa
 echo -e "chr_${header}\tspikein\tgene\t246\t${end}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"" >> gRNA.gtf
 echo -e "chr_${header}\tspikein\ttranscript\t246\t${end}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"; transcript_id \"${header}-transcript\"; transcript_name \"${header}-transcript\"; transcript_source \"spikein\"; transcript_biotype \"protein_coding\"" >> gRNA.gtf
