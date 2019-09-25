@@ -26,11 +26,11 @@ The files in your WORKING_DIR
 | -- -- sample_name2_R1.fastq.gz
 | -- -- sample_name2_R2.fastq.gz
 | samples.csv
-| gRNA.fa
-| gRNA.gtf
+| gRNAseq.fa
 ```
+
 - fastq files must be put in RAW_DATA folder.
-- gRNA.gtf and gRNA.fa must be available.
+- gRNAseq.fa must be available.
 -	samples.csv must be available.
 -	samples.csv template:
 
@@ -38,6 +38,16 @@ The files in your WORKING_DIR
 samples,expected_cells,read_lengths,batch
 sample_name1,500,100,Batch1
 sample_name2,500,100,Batch2
+```
+
+sample of gRNAseq.fa
+```
+> gRNA1
+CACCGTGGGCGGAGACCGTCCTAAT
+> gRNA2
+CACCGCAGGTCTTCTCGCTACCGA
+> gRNA3
+CACCGTAGGACGGTCTCCGCCCACC
 ```
 
 expected_cells is the amount of cells you expect from your sample.

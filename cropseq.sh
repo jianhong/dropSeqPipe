@@ -2,11 +2,11 @@
 usage="$(basename "$0") [-h] [-seupabmrd] -- CropSeq_pipeline
 
 where:
-    -e  email address. 
-    -u  your name. 
+    -e  email address.
+    -u  your name.
     -d  the directory of dropSeqPipe.
     -i  the directory of ignome. for example /work/jo117/igenome/UCSC
-    
+
     -h  show this help text
     -s  species; default mm10
     -p  5-prime-smart-adapter; default: AATGATACGGCGACCACCGAGATCTACACGCCTGTCCGCGGAAGCAGTGGTATCAACGCAGAGTAC
@@ -15,11 +15,11 @@ where:
     -m  minimum UMI/Gene pair needed to be counted as one. default: 1
     -l  the filename of your whitelist fi you have one. Well plate base protocols often have one.
 	-r  bsub or not; default yes
-	
+
 example:
 	$(basename "$0") -e jianhong.ou@duke.edu -u jianhong -d /work/jo117/TataLab/DropSeq/dropSeqPipe -i /work/jo117/igenome/UCSC
-	
-Note: 
+
+Note:
 	fastq files must be put in RAW_DATA folder.
 	gRNA.gtf and gRNA.fa must be available.
 	samples.csv must be available.
@@ -40,9 +40,15 @@ batch is the batch of your sample. If you are added new samples to the same expe
 | -- -- sample_name2_R1.fastq.gz
 | -- -- sample_name2_R2.fastq.gz
 | samples.csv
-| gRNA.fa
-| gRNA.gtf
+| gRNAseq.fa
 
+sample of gRNAseq.fa
+> gRNA1
+CACCGTGGGCGGAGACCGTCCTAAT
+> gRNA2
+CACCGCAGGTCTTCTCGCTACCGA
+> gRNA3
+CACCGTAGGACGGTCTCCGCCCACC
 
 please make sure dropSeqPip is installed. And make sure you installation is like this
 
@@ -68,6 +74,8 @@ species=mm10
 igenome=""
 run="yes"
 whitelist=""
+upsgRNA="gagggcctatttcccatgattccttcatatttgcatatacgatacaaggctgttagagagataattagaattaatttgactgtaaacacaaagatattagtacaaaatacgtgacgtagaaagtaataatttcttgggtagtttgcagttttaaaattatgttttaaaatggactatcatatgcttaccgtaacttgaaagtatttcgatttcttggctttatatatcttgtggaaaggacgaaa"
+dwsgRNA="gttttagagctagaaatagcaagttaaaataaggctagtccgttatcaacttgaaaaagtggcaccgagtcggtgctttttt"
 
 while getopts ':hs:e:u:p:a:b:m:d:r:i:l:' option; do
 	case "$option" in
@@ -115,8 +123,8 @@ if [ "$email" == "" ] || [ "$person" == "" ] || [ "$dsp" == "" ] || [ "$igenome"
 	exit
 fi
 
-if [ ! -f "gRNA.fa" ] || [ ! -f "gRNA.gtf" ]; then
-	printf "gRNA.fa or gRNA.gtf do not exist\n\n" >&2
+if [ ! -f "gRNAseq.fa" ]; then
+	printf "gRNAseq.fa do not exist\n\n" >&2
 	exit
 fi
 
@@ -152,6 +160,24 @@ pd=${PWD}
 ## prepare genome and gtf files
 ## the gtf files must contain exon in column 3
 
+## prepare gRNA.gtf and gRNA.fa
+rm -f gRNA.gtf
+rm -f gRNA.fa
+seq=""
+while IFS= read -r line
+do
+ if [ ${line:0:1} == ">" ]; then
+   header=${line#">"}
+   header=${header//[[:blank:]]/}
+   echo ">$header" >> gRNA.fa
+   echo "$upsgRNA$seq$dwsgRNA" >> gRNA.fa
+   echo "chr_${header}\tspikein\tgene\t246\t${#seq}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"" >> gRNA.gtf
+   echo "chr_${header}\tspikein\ttranscript\t246\t${#seq}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"; transcript_id \"${header}-transcript\"; transcript_name \"${header}-transcript\"; transcript_source \"spikein\"; transcript_biotype \"protein_coding\"" >> gRNA.gtf
+   $seq=""
+ else
+   seq="$seq$line"
+ fi
+done < "gRNAseq.fa"
 
 
 mkdir -p ${species}_gRNA_${d}_1
