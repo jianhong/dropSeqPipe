@@ -163,22 +163,33 @@ pd=${PWD}
 ## prepare gRNA.gtf and gRNA.fa
 rm -f gRNA.gtf
 rm -f gRNA.fa
+
 seq=""
+newheader=""
 while IFS= read -r line
 do
- if [ ${line:0:1} == ">" ]; then
-   header=${line#">"}
-   header=${header//[[:blank:]]/}
-   echo ">$header" >> gRNA.fa
-   echo "$upsgRNA$seq$dwsgRNA" >> gRNA.fa
-   echo "chr_${header}\tspikein\tgene\t246\t${#seq}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"" >> gRNA.gtf
-   echo "chr_${header}\tspikein\ttranscript\t246\t${#seq}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"; transcript_id \"${header}-transcript\"; transcript_name \"${header}-transcript\"; transcript_source \"spikein\"; transcript_biotype \"protein_coding\"" >> gRNA.gtf
-   $seq=""
+ if [ "${line:0:1}" == ">" ]; then
+   header=$newheader
+   newheader=${line#">"}
+   newheader=${newheader//[[:blank:]]/}
+   if [ "$header" != "" ]; then
+     echo ">$header" >> gRNA.fa
+     echo "$upsgRNA$seq$dwsgRNA" >> gRNA.fa
+     end=$(( 247 + ${#seq}))
+     echo -e "chr_${header}\tspikein\tgene\t246\t${end}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"" >> gRNA.gtf
+     echo -e "chr_${header}\tspikein\ttranscript\t246\t${end}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"; transcript_id \"${header}-transcript\"; transcript_name \"${header}-transcript\"; transcript_source \"spikein\"; transcript_biotype \"protein_coding\"" >> gRNA.gtf
+     seq=""
+   fi
  else
    seq="$seq$line"
  fi
 done < "gRNAseq.fa"
-
+header=$newheader
+echo ">$header" >> gRNA.fa
+echo "$upsgRNA$seq$dwsgRNA" >> gRNA.fa
+echo -e "chr_${header}\tspikein\tgene\t246\t${end}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"" >> gRNA.gtf
+echo -e "chr_${header}\tspikein\ttranscript\t246\t${end}\t.\t+\t.\tgene_id \"${header}\"; gene_name \"${header}\"; gene_source \"spikein\"; gene_biotype \"protein_coding\"; transcript_id \"${header}-transcript\"; transcript_name \"${header}-transcript\"; transcript_source \"spikein\"; transcript_biotype \"protein_coding\"" >> gRNA.gtf
+seq=""
 
 mkdir -p ${species}_gRNA_${d}_1
 
@@ -248,7 +259,7 @@ EOT
 pt=`which python`
 pt=`echo "${pt/bin\/python/lib}"`
 
-cat <<EOT >> dropseqpipe.sh
+cat <<EOT > dropseqpipe.sh
 #!/bin/bash
 #SBATCH -J dropSeqPipe #jobname
 #SBATCH --array=1 # job array, can be 1,3,5,7 or 1-7:2 '%' will limit the number of job
